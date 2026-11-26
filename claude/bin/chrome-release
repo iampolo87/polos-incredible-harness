@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Kill the headless Chrome owned by THIS session's chrome-devtools MCP server.
+# The server stays up and relaunches Chrome lazily on the next tool call.
+# ponytail: assumes the calling shell's nearest `claude` ancestor owns the MCP server.
+p=$PPID
+while [ "$p" -gt 1 ] && [ "$(ps -o comm= -p "$p")" != claude ]; do
+  p=$(ps -o ppid= -p "$p" | tr -d ' ')
+done
+[ "$p" -gt 1 ] || { echo "no claude ancestor"; exit 1; }
+n=0
+for m in $(pgrep -P "$p" -f '^chrome-devtools-mcp$'); do
+  for c in $(pgrep -P "$m" chrome); do kill "$c" && n=$((n+1)); done
+done
+echo "released $n chrome process(es) for claude pid $p"

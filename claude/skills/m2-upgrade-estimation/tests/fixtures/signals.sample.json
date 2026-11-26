@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "current_version": "2.4.4",
+    "target_version": "2.4.7-p3",
+    "current_php": "8.1",
+    "target_php": "8.3",
+    "edition": "enterprise"
+  },
+  "core_diff": {
+    "modules_changed": 120,
+    "diff_lines": 45000
+  },
+  "custom_impact": {
+    "preference": 3,
+    "plugin": 10,
+    "extends": 40,
+    "implements": 2,
+    "virtualType": 4,
+    "template": 5,
+    "layout": 3,
+    "extends_signature_risk": 8,
+    "overlap_modules": 25,
+    "third_party_vendors": 5
+  },
+  "rector": {
+    "files_changed": 80,
+    "by_ruleset": {
+      "PHP_LEVEL": 50,
+      "CODE_QUALITY": 20,
+      "DEAD_CODE": 5,
+      "TYPE_DECLARATION": 25
+    }
+  },
+  "phpcompat": {"violations": 120},
+  "phpstan": {"errors": 40},
+  "uct": {"findings": 60, "autofix": 12, "by_severity": {"critical": 5, "error": 30, "warning": 25},
+    "upgrade_delta": {"findings": 20, "by_severity": {"critical": 5, "error": 15, "warning": 0}},
+    "preexisting": {"findings": 40},
+    "sample": [
+      {"level": "CRITICAL", "message": "Call to removed method Magento\\Foo\\Bar::baz on 2.4.8", "file": "app/code/Vendor/Mod/Baz.php", "line": 42},
+      {"level": "ERROR", "message": "Use of non-API method Magento\\Quote\\Model\\Quote::getX", "file": "app/code/Vendor/Checkout/Plugin/Q.php", "line": 17}
+    ]},
+  "composer": {"extension_conflicts": 4},
+  "php_ladder": [
+    {"php": "8.3", "phpcompat": 120, "rector_autofix": 50, "measurable": true},
+    {"php": "8.4", "phpcompat": 160, "rector_autofix": 60, "measurable": true},
+    {"php": "8.5", "phpcompat": 0, "rector_autofix": 0, "measurable": false}
+  ]
+}

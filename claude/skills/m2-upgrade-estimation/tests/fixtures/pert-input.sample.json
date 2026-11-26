@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "current_version": "2.4.4",
+    "target_version": "2.4.7-p3",
+    "current_php": "8.1",
+    "target_php": "8.3",
+    "edition": "enterprise"
+  },
+  "phases": {
+    "Developer": [
+      {
+        "label": "Migración de código custom",
+        "O": 10, "M": 20, "P": 60,
+        "auto_O": 4, "auto_M": 8, "auto_P": 24,
+        "automation": {"tool": "rector", "found": 100, "autofix": 60}
+      }
+    ],
+    "QA": [
+      {
+        "label": "Regresión por área",
+        "O": 2, "M": 4, "P": 12,
+        "auto_O": 1, "auto_M": 2, "auto_P": 6
+      }
+    ]
+  },
+  "php_ladder": {
+    "base_php": "8.3",
+    "base_hours": 17.5,
+    "recommended_php": "8.4",
+    "steps": [
+      {"php": "8.4", "delta_hours": 6.25, "cumulative": 23.75, "measurable": true},
+      {"php": "8.5", "delta_hours": null, "cumulative": null, "measurable": false}
+    ]
+  }
+}

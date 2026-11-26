@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Usage: ponytail-mode [off|lite|full|ultra]  (no arg = show current)
+f="$HOME/.claude/.ponytail-mode"
+[ -z "$1" ] && { cat "$f" 2>/dev/null || echo full; exit 0; }
+case "$1" in
+  off|lite|full|ultra) printf '%s' "$1" > "$f"; echo "ponytail: $1";;
+  *) echo "bad mode: $1"; exit 1;;
+esac

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estimación de upgrade — {{CURRENT_VERSION}} → {{TARGET_VERSION}}</title>
+<style>
+  /* ──────────────────────────────────────────────────────────────────────
+   * DESIGN SYSTEM — "Editorial-Technical"
+   * Reused from magento-security-upgrade/templates/report.html
+   * Palette: warm cream #faf8f1 paper · deep navy #1e3a5f · burnt orange #b8662e
+   * ──────────────────────────────────────────────────────────────────── */
+
+  :root {
+    --ink-primary:    #1c1917;
+    --ink-secondary:  #44403c;
+    --ink-tertiary:   #78716c;
+    --ink-quaternary: #a8a29e;
+    --paper:          #faf8f1;
+    --paper-warm:     #f5f2e8;
+    --surface:        #ffffff;
+    --surface-soft:   #faf7ed;
+    --border:         #e8e2cf;
+    --border-strong:  #c9bf9f;
+
+    --accent:         #1e3a5f;
+    --accent-soft:    #e6ecf3;
+    --accent-strong:  #142a44;
+    --highlight:      #b8662e;
+    --highlight-soft: #fbe9d5;
+
+    --sev-critical:      #7a1d12;
+    --sev-critical-soft: #f9e5e0;
+    --sev-high:          #a8261d;
+    --sev-high-soft:     #fbe6e1;
+    --sev-medium:        #936219;
+    --sev-medium-soft:   #fbeed3;
+    --sev-low:           #3f6212;
+    --sev-low-soft:      #eaf2d6;
+
+    --diff-add-fg:  #2c6e3a;
+    --diff-add-bg:  #ecf6e8;
+    --diff-del-fg:  #9d2a1f;
+    --diff-del-bg:  #fbe9e5;
+    --diff-hunk-fg: #6541a0;
+    --diff-hunk-bg: #f1ecf9;
+    --diff-meta-fg: #6b5e4a;
+
+    --font-display: "Iowan Old Style", "Apple Garamond", Baskerville,
+                    "Hoefler Text", "Times New Roman", Georgia, serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, "system-ui", "Segoe UI",
+                    "Helvetica Neue", Helvetica, sans-serif;
+    --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono",
+                    Menlo, Consolas, monospace;
+
+    --space-xs: 4px; --space-sm: 8px; --space-md: 16px;
+    --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
+    --radius-sm: 3px; --radius-md: 6px; --radius-lg: 10px;
+
+    /* Legacy aliases */
+    --bg: var(--paper); --text: var(--ink-primary); --muted: var(--ink-tertiary);
+    --ok: var(--sev-low); --ok-soft: var(--sev-low-soft);
+    --warn: var(--sev-medium); --warn-soft: var(--sev-medium-soft);
+    --danger: var(--sev-high); --danger-soft: var(--sev-high-soft);
+    --critical: var(--sev-critical);
+    --info: var(--diff-hunk-fg); --info-soft: var(--diff-hunk-bg);
+    --mono: var(--font-mono);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; padding: 0;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink-primary);
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 22% 30%, rgba(28, 25, 23, 0.015) 0, transparent 55%),
+      radial-gradient(circle at 78% 70%, rgba(30, 58, 95, 0.012) 0, transparent 55%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Layout: grid con TOC sticky a la izquierda */
+  .container {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    column-gap: var(--space-xl);
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-lg);
+  }
+  header.report-header,
+  footer.report-footer,
+  section#resumen {
+    grid-column: 1 / -1;
+  }
+  nav.toc {
+    grid-column: 1;
+    grid-row: 3 / span 100;
+    position: sticky;
+    top: var(--space-lg);
+    align-self: start;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  section { grid-column: 2; }
+  @media (max-width: 1024px) {
+    .container { grid-template-columns: 1fr; }
+    nav.toc { position: static; grid-row: auto; grid-column: 1; max-height: none; }
+    section { grid-column: 1; }
+  }
+
+  /* Numeración romana en secciones */
+  body { counter-reset: section; }
+  section h2 { counter-increment: section; position: relative; }
+  section h2::before {
+    content: counter(section, upper-roman);
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.20em;
+    color: var(--highlight);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  /* Header / portada */
+  header.report-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+    margin-bottom: var(--space-xl);
+    position: relative;
+    overflow: hidden;
+  }
+  header.report-header::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg,
+      var(--accent) 0%, var(--accent) 62%,
+      var(--highlight) 62%, var(--highlight) 100%);
+  }
+  header.report-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--ink-primary);
+    margin: 0 0 10px 0;
+    letter-spacing: -0.015em;
+  }
+  header.report-header .subtitle {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--ink-secondary);
+    font-style: italic;
+    margin-bottom: var(--space-lg);
+    line-height: 1.4;
+  }
+  header.report-header .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px 32px;
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+  }
+  header.report-header .meta div { color: var(--ink-secondary); }
+  header.report-header .meta strong {
+    color: var(--ink-quaternary);
+    margin-right: 8px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* Línea de titular de estimación */
+  .headline-estimate {
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0 0;
+    font-family: var(--font-display);
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  .headline-estimate strong { font-size: 19px; }
+
+  /* TOC */
+  nav.toc {
+    font-size: 13px;
+    padding: var(--space-md) 0 var(--space-md) var(--space-md);
+    border-left: 2px solid var(--border);
+  }
+  nav.toc h2 {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--ink-quaternary);
+    margin: 0 0 14px 0;
+    padding: 0; border: none;
+  }
+  nav.toc h2::before { display: none; }
+  nav.toc ul { list-style: none; padding: 0; margin: 0; }
+  nav.toc li { margin-bottom: 8px; line-height: 1.4; }
+  nav.toc li.toc-sub { padding-left: 14px; }
+  nav.toc a {
+    color: var(--ink-secondary);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: color 150ms ease, border-color 150ms ease;
+  }
+  nav.toc a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Secciones */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl) var(--space-xl) var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+  section h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.012em;
+    color: var(--ink-primary);
+    margin: 0 0 var(--space-md) 0;
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border);
+  }
+  section h3 {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--ink-primary);
+    margin: var(--space-lg) 0 var(--space-sm);
+    letter-spacing: -0.005em;
+  }
+  section h4 {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    margin: var(--space-md) 0 var(--space-sm);
+  }
+  section p { color: var(--ink-secondary); margin: var(--space-sm) 0 var(--space-md); }
+  section a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    text-underline-offset: 2px;
+    transition: color 150ms ease;
+  }
+  section a:hover { color: var(--highlight); }
+
+  /* Tablas */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--space-sm) 0 var(--space-md);
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  /* long FQCNs / paths have no spaces and backslashes don't break — force wrap
+     so the table never overflows its container */
+  table { table-layout: fixed; }
+  table code { white-space: normal; word-break: break-all; background: transparent; padding: 0; }
+  thead th {
+    background: var(--surface-soft);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    border-bottom: 2px solid var(--border-strong);
+    font-family: var(--font-mono);
+  }
+  tbody tr:hover td { background: var(--surface-soft); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--surface-soft);
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    color: var(--ink-primary);
+    font-weight: 500;
+  }
+  pre {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: var(--surface-soft);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .badge.critical { background: var(--sev-critical); color: #fff; }
+  .badge.high     { background: var(--sev-high); color: #fff; }
+  .badge.medium   { background: var(--sev-medium); color: #fff; }
+  .badge.low      { background: var(--ink-tertiary); color: #fff; }
+  .badge.info     { background: var(--accent); color: #fff; }
+  .badge.ok       { background: var(--sev-low); color: #fff; }
+  .badge.warn     { background: var(--sev-medium-soft); color: var(--sev-medium); }
+  .badge.danger   { background: var(--sev-high-soft); color: var(--sev-high); }
+
+  /* Stat grid */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-md);
+    margin: var(--space-md) 0 var(--space-lg);
+  }
+  .stat-card {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+  }
+  .stat-card .label {
+    font-family: var(--font-mono);
+    color: var(--ink-tertiary);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .stat-card .value {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--ink-primary);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .stat-card .value.danger { color: var(--sev-high); }
+  .stat-card .value.warn   { color: var(--sev-medium); }
+  .stat-card .value.ok     { color: var(--sev-low); }
+
+  /* Estimation cards — reused from design system */
+  .estimation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-md);
+    margin: var(--space-md) 0 var(--space-lg);
+  }
+  .estimation-card {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .estimation-card::before {
+    content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+  }
+  .estimation-card.manual::before { background: var(--sev-medium); }
+  .estimation-card.ai::before     { background: var(--accent); }
+  .estimation-card h3 {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+  }
+  .estimation-card .total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border);
+  }
+  .estimation-card .total:last-of-type { border-bottom: none; margin-bottom: 0; }
+  .estimation-card .total .label {
+    color: var(--ink-tertiary);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .estimation-card .total .value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ink-primary);
+    line-height: 1;
+  }
+  .estimation-card .total .unit {
+    color: var(--ink-tertiary);
+    font-size: 12px;
+    margin-left: 4px;
+    font-family: var(--font-mono);
+  }
+  .estimation-savings {
+    background: var(--sev-low-soft);
+    color: var(--ink-secondary);
+    border-left: 4px solid var(--sev-low);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin: var(--space-md) 0 var(--space-lg);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .estimation-savings strong { font-size: 15px; color: var(--ink-primary); }
+
+  /* Caveats + callouts */
+  .caveats {
+    background: var(--sev-medium-soft);
+    border-left: 4px solid var(--sev-medium);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin: var(--space-md) 0;
+    font-size: 13px;
+    color: var(--ink-secondary);
+  }
+  .caveats strong { color: var(--sev-medium); }
+  .caveats ul { margin: var(--space-sm) 0 0; padding-left: 22px; }
+  .caveats li { margin-bottom: 6px; }
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin: var(--space-md) 0;
+    font-size: 13px;
+    color: var(--ink-secondary);
+  }
+  .callout strong { color: var(--accent-strong); }
+
+  /* Tabla escalera PHP */
+  .php-ladder-note {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: var(--space-md) 0 var(--space-sm);
+    font-size: 12.5px;
+    color: var(--ink-secondary);
+  }
+  .php-ladder-note strong { color: var(--accent-strong); }
+  .php-ladder-base td { font-weight: 600; background: var(--surface-soft); }
+  .php-ladder-nomeasure { color: var(--ink-quaternary); font-style: italic; }
+
+  /* Owner-split impacto */
+  .owner-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin: var(--space-md) 0 var(--space-lg);
+  }
+  @media (max-width: 700px) { .owner-split { grid-template-columns: 1fr; } }
+  .owner-panel {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+  }
+  .owner-panel h4 { margin-top: 0; }
+  .owner-panel table { font-size: 12.5px; margin: 0; }
+  .owner-panel .vendor-list {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-secondary);
+    margin-top: 6px;
+    word-break: break-word;
+  }
+
+  /* Filas de impacto por severidad */
+  tr.sev-critica td:first-child { border-left: 3px solid var(--sev-critical); }
+  tr.sev-alta td:first-child    { border-left: 3px solid var(--sev-high); }
+  tr.sev-media td:first-child   { border-left: 3px solid var(--sev-medium); }
+  tr.sev-baja td:first-child    { border-left: 3px solid var(--sev-low); }
+
+  /* Resumen de impacto — conteos por severidad */
+  .impact-summary {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin: var(--space-md) 0 var(--space-lg);
+  }
+  .impact-chip {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .impact-chip .count {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .impact-chip.critica .count { color: var(--sev-critical); }
+  .impact-chip.alta .count    { color: var(--sev-high); }
+  .impact-chip.media .count   { color: var(--sev-medium); }
+
+  /* Footer */
+  footer.report-footer {
+    text-align: center;
+    color: var(--ink-quaternary);
+    font-size: 12.5px;
+    padding: var(--space-xl) 0 var(--space-lg);
+    font-family: var(--font-display);
+    font-style: italic;
+  }
+
+  /* Imprimir — expande todos los collapsibles, sin chrome, paginación limpia */
+  @media print {
+    body { background: #fff; background-image: none; }
+    .container { display: block; max-width: none; padding: 0; }
+    nav.toc { position: static; max-height: none; overflow: visible; border-left: none; margin-bottom: 24px; padding-left: 0; }
+    section, header.report-header { border: none; box-shadow: none; page-break-inside: avoid; padding: 12px 0; }
+    section h2::before { color: #888; }
+    details { display: block !important; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary { display: none !important; }
+    pre { max-height: none !important; overflow: visible !important; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="report-header">
+  <h1>Estimación de upgrade — Magento 2</h1>
+  <div class="subtitle">{{CURRENT_VERSION}} → {{TARGET_VERSION}} &nbsp;·&nbsp; PHP {{CURRENT_PHP}} → {{TARGET_PHP}} &nbsp;·&nbsp; {{EDITION}}</div>
+  <div class="meta">
+    <div><strong>Versión actual:</strong>{{CURRENT_VERSION}}</div>
+    <div><strong>Versión objetivo:</strong>{{TARGET_VERSION}}</div>
+    <div><strong>PHP actual:</strong>{{CURRENT_PHP}}</div>
+    <div><strong>PHP objetivo:</strong>{{TARGET_PHP}}</div>
+    <div><strong>Edición:</strong>{{EDITION}}</div>
+    <div><strong>Módulos core modificados:</strong>{{MODULES_CHANGED}}</div>
+  </div>
+  <div class="headline-estimate">
+    {{HEADLINE_ESTIMATE}}
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>Contenidos</h2>
+  <ul>
+    <li><a href="#resumen">Alcance del upgrade</a></li>
+    <li><a href="#automatizacion">Cobertura de automatización</a></li>
+    <li><a href="#impacto">Impacto en código custom</a></li>
+    <li><a href="#uct-findings">API deprecada / removida (UCT)</a></li>
+    <li class="toc-sub"><a href="#php-ladder">Escalera de versiones PHP</a></li>
+    <li><a href="#estimation-mount">Estimación PERT</a></li>
+    <li><a href="#supuestos">Supuestos y límites</a></li>
+  </ul>
+</nav>
+
+<section id="resumen">
+  <h2>Alcance del upgrade</h2>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="label">Versión actual</div>
+      <div class="value">{{CURRENT_VERSION}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Versión objetivo</div>
+      <div class="value">{{TARGET_VERSION}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">PHP actual</div>
+      <div class="value">{{CURRENT_PHP}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">PHP objetivo</div>
+      <div class="value">{{TARGET_PHP}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Edición</div>
+      <div class="value" style="font-size: 20px;">{{EDITION}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Módulos core modificados</div>
+      <div class="value">{{MODULES_CHANGED}}</div>
+    </div>
+  </div>
+  <div class="estimation-savings">
+    <strong>Estimación titular:</strong> {{HEADLINE_ESTIMATE}}
+  </div>
+</section>
+
+<section id="automatizacion">
+  <h2>Cobertura de automatización</h2>
+  <p>Herramientas de análisis y auto-fix ejecutadas sobre el código custom del proyecto. La columna <em>Manual restante</em> = Encontrados − Auto-fix y representa el trabajo que requiere intervención humana.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Herramienta</th>
+        <th>Encontrados</th>
+        <th>Auto-fix</th>
+        <th>Manual restante</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{AUTOMATION_TABLE}}
+    </tbody>
+  </table>
+</section>
+
+<section id="impacto">
+  <h2>Impacto en código custom</h2>
+  <p>Análisis estructural de las extensiones y personalizaciones custom respecto al código Magento modificado en el upgrade objetivo. Los hallazgos se clasifican por severidad según el nivel de intervención requerida.</p>
+  {{IMPACT_SUMMARY}}
+
+  <h3>Desglose por propietario</h3>
+  <div class="owner-split">
+    <div class="owner-panel">
+      <h4>Código custom (propietario)</h4>
+      <table>
+        <thead>
+          <tr><th>Tipo de relación</th><th>Cantidad</th></tr>
+        </thead>
+        <tbody>
+          {{IMPACT_CUSTOM_ROWS}}
+        </tbody>
+      </table>
+    </div>
+    <div class="owner-panel">
+      <h4>Extensiones de terceros</h4>
+      {{IMPACT_THIRD_PARTY}}
+    </div>
+  </div>
+
+  <h3>Principales hallazgos</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Severidad</th>
+        <th>Relación</th>
+        <th>Archivo custom</th>
+        <th>Target Magento</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{IMPACT_ROWS}}
+    </tbody>
+  </table>
+</section>
+
+<section id="uct-findings">
+  <h2>API deprecada / removida (UCT)</h2>
+  <p>Hallazgos del Adobe Upgrade Compatibility Tool sobre el código a migrar (excluye proveedores comerciales mantenidos). Cada fila es una llamada a API deprecada o removida en la versión objetivo que el equipo debe revisar.</p>
+  {{UCT_FINDINGS}}
+</section>
+
+<section id="php-ladder">
+  <h2>Escalera de versiones PHP</h2>
+  <p>Costo marginal de subir un minor PHP adicional por encima del objetivo del upgrade. Útil para planificar actualizaciones futuras sin re-analizar desde cero.</p>
+  <div class="php-ladder-note">
+    <strong>Cómo leer esta tabla:</strong> la fila base es el costo de llegar al PHP objetivo del upgrade.
+    Cada fila siguiente muestra el costo <em>adicional</em> de subir un minor más, y el acumulado total desde la versión actual.
+    Las filas marcadas "no medible" corresponden a versiones PHP sin tooling de análisis disponible al momento del relevamiento.
+  </div>
+  {{PHP_LADDER}}
+</section>
+
+{{ESTIMATION_SECTION}}
+
+<section id="supuestos">
+  <h2>Supuestos y límites</h2>
+  <div class="caveats">
+    <strong>Leer antes de citar estos números:</strong>
+    <ul>
+      <li><strong>±30% ROM.</strong> Estas cifras son estimaciones de <em>Rough Order of Magnitude</em>, no compromisos. Usarlas para presupuestar, no para prometer fechas.</li>
+      <li><strong>Equipo asumido: 1 dev + 1 QA dedicados.</strong> Escalar el equipo no escala el tiempo en forma lineal (ley de Brooks).</li>
+      <li><strong>El track "con automatización" asume cobertura medida</strong> de Rector, UCT y phpcs sobre este código específico. Herramientas no instaladas o reglas que no aplican reducen el ahorro real.</li>
+      <li><strong>Excluye:</strong> approvals de stakeholders, ventanas de change-management, monitoreo post-deploy y descubrimiento de regresión (bugs que QA manda de vuelta al dev son una iteración aparte).</li>
+      <li><strong>Excluye:</strong> integraciones externas (ERP, CRM, analytics, certificaciones de medios de pago de terceros) que requieran re-verificación post-upgrade.</li>
+    </ul>
+  </div>
+  <div class="callout">
+    <strong>Cómo leer PERT vs ROM:</strong> PERT da una <em>distribución</em>, no un número. Para comprometer una fecha con 90% de probabilidad usá el CI 90%; para una fecha agresiva (más riesgo) el CI 70%. El E es el promedio matemático, útil para presupuestar pero no para prometer.
+  </div>
+</section>
+
+<footer class="report-footer">
+  Generado por el skill <code>m2-upgrade-estimation</code> de Claude Code &mdash; HTML autocontenido, sin dependencias externas.
+</footer>
+
+</div>
+</body>
+</html>

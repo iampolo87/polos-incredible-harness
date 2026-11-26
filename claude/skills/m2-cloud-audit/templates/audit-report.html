@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magento Cloud Audit — {{PROJECT}} ({{MAGENTO_VERSION}})</title>
+<style>
+  :root {
+    --ink:#1c1917; --ink-2:#44403c; --ink-3:#78716c;
+    --paper:#faf8f1; --surface:#ffffff; --surface-soft:#faf7ed;
+    --border:#e8e2cf; --border-strong:#c9bf9f;
+    --accent:#1e3a5f; --accent-soft:#e6ecf3; --highlight:#b8662e; --highlight-soft:#fbe9d5;
+    --high:#a8261d; --high-soft:#fbe6e1;
+    --med:#936219; --med-soft:#fbeed3;
+    --low:#3f6212; --low-soft:#eaf2d6;
+    --ok:#2c6e3a; --ok-soft:#ecf6e8;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+    --display:"Iowan Old Style",Baskerville,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--body);font-size:15px;line-height:1.6;color:var(--ink);background:var(--paper)}
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 24px}
+  header.rh{border-bottom:3px solid var(--accent);padding-bottom:20px;margin-bottom:8px}
+  header.rh .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--highlight);font-weight:600}
+  header.rh h1{font-family:var(--display);font-size:30px;margin:6px 0 10px}
+  header.rh .meta{font-family:var(--mono);font-size:12.5px;color:var(--ink-3)}
+  header.rh .meta b{color:var(--ink-2)}
+  .cloud-banner{margin-top:12px;padding:8px 12px;border-radius:6px;font-size:13px;background:var(--accent-soft);border:1px solid var(--border-strong)}
+  h2{font-family:var(--display);font-size:22px;margin:46px 0 4px;padding-top:8px}
+  h2 .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--highlight);display:block;text-transform:uppercase}
+  h3{font-size:15px;margin:24px 0 8px;color:var(--ink-2)}
+  p.lead{color:var(--ink-2);margin:6px 0 16px}
+  /* scorecards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:22px 0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+  .card .big{font-family:var(--display);font-size:40px;line-height:1;font-weight:600}
+  .card .lbl{font-size:13px;color:var(--ink-3);margin-top:6px}
+  .card .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px}
+  .card.high{border-left:5px solid var(--high)} .card.high .big{color:var(--high)}
+  .card.med{border-left:5px solid var(--med)} .card.med .big{color:var(--med)}
+  .card.ok{border-left:5px solid var(--ok)} .card.ok .big{color:var(--ok)}
+  /* tables */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;background:var(--surface)}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:var(--surface-soft);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);cursor:pointer;user-select:none;white-space:nowrap}
+  th[data-sort]:after{content:" \2195";opacity:.3;font-size:10px}
+  tr:hover td{background:var(--surface-soft)}
+  code,.mono{font-family:var(--mono);font-size:12.5px}
+  td.id code{color:var(--accent);font-weight:600}
+  .pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600}
+  .t1,.s-high{background:var(--high-soft);color:var(--high)}
+  .t2,.s-med{background:var(--med-soft);color:var(--med)}
+  .t3{background:var(--accent-soft);color:var(--accent)}
+  .t4,.s-low{background:var(--low-soft);color:var(--low)}
+  .st-missing{background:var(--high-soft);color:var(--high)}
+  .st-suboptimal{background:var(--med-soft);color:var(--med)}
+  .st-ok{background:var(--ok-soft);color:var(--ok)}
+  .st-eol{background:var(--high-soft);color:var(--high)}
+  .st-below_recommended{background:var(--med-soft);color:var(--med)}
+  .st-deferred,.st-no_file,.st-na,.st-unknown{background:#eee;color:var(--ink-3)}
+  .caveat{background:var(--highlight-soft);border:1px solid var(--highlight);border-radius:8px;padding:14px 16px;margin:16px 0;font-size:13.5px}
+  .caveat b{color:var(--highlight)}
+  details{margin:10px 0;border:1px solid var(--border);border-radius:8px;padding:0 14px;background:var(--surface)}
+  details>summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:13.5px}
+  pre.snip{background:#1c1917;color:#f5f2e8;padding:12px 14px;border-radius:6px;overflow:auto;font-family:var(--mono);font-size:12px;margin:8px 0 14px}
+  a{color:var(--accent)}
+  .src{font-size:11px;font-family:var(--mono)}
+  .arrow{color:var(--high);font-weight:600}
+  footer{margin-top:54px;border-top:1px solid var(--border);padding-top:18px;font-size:12px;color:var(--ink-3);font-family:var(--mono)}
+  ul.assume{font-size:13.5px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="rh">
+  <div class="kicker">Adobe Commerce Cloud · Configuration &amp; Patch Audit</div>
+  <h1>{{PROJECT}}</h1>
+  <div class="meta"><b>Magento</b> {{MAGENTO_VERSION}} ({{EDITION}}) &nbsp;·&nbsp; <b>Generated</b> {{DATE}}</div>
+  {{CLOUD_BANNER}}
+</header>
+
+<section>
+  <h2><span class="n">Section I</span>Executive summary</h2>
+  <div class="cards">
+    <div class="card {{SC_PATCHES_CLASS}}">
+      <div class="big">{{SC_PATCHES}}</div>
+      <div class="lbl">Quality patches applicable but not applied</div>
+      <div class="sub">{{SC_PATCHES_SUB}}</div>
+    </div>
+    <div class="card {{SC_CONFIGS_CLASS}}">
+      <div class="big">{{SC_CONFIGS}}</div>
+      <div class="lbl">Config recommendations missing / suboptimal</div>
+      <div class="sub">{{SC_CONFIGS_SUB}}</div>
+    </div>
+    <div class="card {{SC_SERVICES_CLASS}}">
+      <div class="big">{{SC_SERVICES}}</div>
+      <div class="lbl">Services EOL / below recommended</div>
+      <div class="sub">{{SC_SERVICES_SUB}}</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">Section II</span>Missing quality patches</h2>
+  <p class="lead">Patches from the installed <code>magento/quality-patches</code> catalog that apply to {{MAGENTO_VERSION}} but are not in the project's declared-applied set. Ranked by impact tier (T1 highest).</p>
+  <div class="caveat"><b>Declarative detection.</b> This audit detects patches <i>declared</i> applied (<code>QUALITY_PATCHES</code> in <code>.magento.env.yaml</code>, <code>m2-hotfixes/</code> filenames, <code>composer.json</code> <code>extra.patches</code>). It does <b>not</b> verify patch contents file-by-file — a declared patch that failed to apply at build time would still show as applied.</p>
+  {{PATCH_TABLE}}
+  <details>
+    <summary>Already-applied patches ({{APPLIED_COUNT}}) &amp; manual hotfixes</summary>
+    {{APPLIED_TABLE}}
+    {{MANUAL_TABLE}}
+  </details>
+</section>
+
+<section>
+  <h2><span class="n">Section III</span>Recommended configs not applied</h2>
+  <p class="lead">Recommended-but-not-default infrastructure settings (Adobe docs), diffed against the project's <code>services.yaml</code>, <code>.magento.env.yaml</code> and PHP config. SWAT does not surface these.</p>
+  {{CONFIG_TABLE}}
+  {{CONFIG_SNIPPETS}}
+</section>
+
+<section>
+  <h2><span class="n">Section IV</span>Service versions (EOL / outdated)</h2>
+  <p class="lead">Provisioned service versions vs Adobe-supported / vendor end-of-life schedules.</p>
+  {{SERVICE_TABLE}}
+</section>
+
+<section>
+  <h2><span class="n">Section V</span>Scope, assumptions &amp; limitations</h2>
+  <ul class="assume">
+    <li><b>Patch detection is declarative</b>, not content-verified (see Section II caveat).</li>
+    <li><b>Config catalog is hand-maintained</b> — catalog version <code>{{CATALOG_VERSION}}</code>, last reviewed {{CATALOG_REVIEWED}}. The patch catalog is read live from <code>vendor/magento/quality-patches</code> and self-updates on <code>composer update</code>.</li>
+    <li><b>env.php-located settings</b> on Cloud are generated at deploy from <code>.magento.env.yaml</code> variables; they are reported as <i>deferred</i>, not missing.</li>
+    <li><b>Files inspected:</b> {{FILES_SEEN}}</li>
+    <li>This audit is read-only. It recommends; it applies nothing.</li>
+  </ul>
+</section>
+
+<footer>m2-cloud-audit · generated {{GENERATED}} · patch catalog {{PATCH_CATALOG_NOTE}}</footer>
+</div>
+<script>
+// Minimal click-to-sort for any <th data-sort> column (self-contained).
+document.querySelectorAll("table.sortable").forEach(function(t){
+  t.querySelectorAll("th[data-sort]").forEach(function(th,ci){
+    th.addEventListener("click",function(){
+      var tb=t.tBodies[0], rows=[].slice.call(tb.rows);
+      var asc=th._asc=!th._asc, kind=th.getAttribute("data-sort");
+      rows.sort(function(a,b){
+        var x=a.cells[ci].getAttribute("data-v")||a.cells[ci].innerText;
+        var y=b.cells[ci].getAttribute("data-v")||b.cells[ci].innerText;
+        if(kind==="num"){x=parseFloat(x)||0;y=parseFloat(y)||0;return asc?x-y:y-x;}
+        return asc?(""+x).localeCompare(y):(""+y).localeCompare(x);
+      });
+      rows.forEach(function(r){tb.appendChild(r);});
+    });
+  });
+});
+</script>
+</body>
+</html>

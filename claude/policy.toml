@@ -1,0 +1,21 @@
+[rules.output_cap]
+mode = "enforce"
+read = "enforce"
+
+[rules.checkpoint]
+mode = "enforce"
+
+[rules.search_scope]
+mode = "enforce"
+
+[rules.sensitive_paths]
+mode = "enforce"
+
+[rules.risk_line]
+mode = "enforce"
+
+[rules.edit_surfaces]
+mode = "enforce"
+
+[rules.destructive]
+mode = "log" # until 2026-12-02

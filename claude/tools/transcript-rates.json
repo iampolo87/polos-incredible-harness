@@ -1,0 +1,53 @@
+{
+  "_README": [
+    "Rates for section 3 of transcript-report.py. Source: bundled claude-api skill",
+    "pricing table, cached 2026-06-24 and read on 2026-09-07 \u2014 NOT re-verified against",
+    "live pricing. These are Anthropic first-party API LIST rates. Claude Code usage on a",
+    "subscription plan is NOT billed this way: section 3 is a notional token-value figure,",
+    "never a bill and never subscription quota.",
+    "cache_multipliers apply to the input rate. read=0.1 and write_5m=1.25 are stated in the",
+    "skill. write_1h=2.0 is NOT confirmed there \u2014 it is the documented convention and is",
+    "flagged because main-loop writes in this dataset are 100% 1h TTL.",
+    "usd_per_mtok_cache_read overrides the read multiplier for a model that prices cache",
+    "reads directly (Fable 5.1 is documented at $0.25/MTok, vs 0.1x of $10 = $1.00)."
+  ],
+  "cache_multipliers": {
+    "read": 0.1,
+    "write_5m": 1.25,
+    "write_1h": 2.0,
+    "write_1h_confirmed": false
+  },
+  "models": {
+    "claude-opus-5": {
+      "usd_per_mtok_input": 5.0,
+      "usd_per_mtok_output": 25.0,
+      "effective_from": "2026-06-24"
+    },
+    "claude-opus-4-8": {
+      "usd_per_mtok_input": 5.0,
+      "usd_per_mtok_output": 25.0,
+      "effective_from": "2026-06-24"
+    },
+    "claude-sonnet-5": {
+      "usd_per_mtok_input": 2.0,
+      "usd_per_mtok_output": 10.0,
+      "effective_from": "2026-06-24"
+    },
+    "claude-haiku-4-5-20251001": {
+      "usd_per_mtok_input": 1.0,
+      "usd_per_mtok_output": 5.0,
+      "effective_from": "2026-06-24"
+    },
+    "claude-fable-5": {
+      "usd_per_mtok_input": 10.0,
+      "usd_per_mtok_output": 50.0,
+      "effective_from": "2026-06-24"
+    },
+    "claude-fable-5-1": {
+      "usd_per_mtok_input": 10.0,
+      "usd_per_mtok_output": 50.0,
+      "effective_from": "2026-06-24",
+      "usd_per_mtok_cache_read": 0.25
+    }
+  }
+}

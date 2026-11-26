@@ -1,0 +1,83 @@
+{
+  "mcpServers": {
+    "atlassian": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v2/mcp"
+    },
+    "chrome-devtools": {
+      "args": [
+        "${HOME}/projects/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js",
+        "--headless",
+        "--isolated",
+        "--no-usage-statistics"
+      ],
+      "command": "node",
+      "env": {},
+      "type": "stdio"
+    },
+    "chrome-live": {
+      "args": [
+        "${HOME}/projects/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js",
+        "--browserUrl=http://127.0.0.1:9222",
+        "--no-usage-statistics"
+      ],
+      "command": "node",
+      "env": {},
+      "type": "stdio"
+    },
+    "context7": {
+      "args": [
+        "${HOME}/projects/context7/packages/mcp/dist/index.js"
+      ],
+      "command": "node",
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "type": "stdio"
+    },
+    "m2graph": {
+      "args": [],
+      "command": "m2graph-mcp",
+      "env": {},
+      "type": "stdio"
+    },
+    "magento-watch": {
+      "type": "http",
+      "url": "https://magento.watch/mcp/api"
+    },
+    "mariadb": {
+      "args": [
+        "${HOME}/projects/mcp-mariadb/dist/index.js"
+      ],
+      "command": "node",
+      "env": {
+        "DB_HOST": "${DB_HOST}",
+        "DB_PASSWORD": "${DB_PASSWORD}",
+        "DB_PORT": "${DB_PORT}",
+        "DB_USER": "${DB_USER}"
+      },
+      "type": "stdio"
+    },
+    "mempalace": {
+      "args": [],
+      "command": "mempalace-light-mcp",
+      "env": {},
+      "type": "stdio"
+    },
+    "newrelic": {
+      "args": [
+        "-y",
+        "newrelic-mcp"
+      ],
+      "command": "npx",
+      "env": {
+        "NEW_RELIC_REGION": "${NEW_RELIC_REGION}"
+      },
+      "type": "stdio"
+    },
+    "notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    }
+  }
+}

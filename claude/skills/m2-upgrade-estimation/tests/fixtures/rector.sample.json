@@ -1,0 +1,8 @@
+{
+  "totals": {"changed_files": 3, "errors": 0},
+  "file_diffs": [
+    {"file": "app/code/Vendor/Mod/X.php", "diff": "--- a\n+++ b", "applied_rectors": ["Rector\\Php80\\Rector\\X", "Rector\\DeadCode\\Rector\\Y"]},
+    {"file": "app/code/Vendor/Mod/Y.php", "diff": "--- a\n+++ b", "applied_rectors": ["Rector\\CodeQuality\\Rector\\Z", "Rector\\Php81\\Rector\\W"]},
+    {"file": "app/code/Amasty/Mod/Z.php", "diff": "--- a\n+++ b", "applied_rectors": ["Rector\\TypeDeclaration\\Rector\\T"]}
+  ]
+}

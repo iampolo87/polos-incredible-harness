@@ -1,0 +1,9 @@
+{
+  "issues": [
+    {"level": "CRITICAL", "message": "Removed API call", "fileName": "/srv/app/code/Vendor/Mod/A.php", "lineNumber": 5},
+    {"level": "ERROR", "message": "Use of non-API method", "fileName": "/srv/app/code/Vendor/Mod/B.php", "lineNumber": 10},
+    {"level": "WARNING", "message": "Deprecated method", "fileName": "/srv/app/code/Vendor/Mod/C.php", "lineNumber": 20},
+    {"level": "ERROR", "message": "Non-API in vendor ext", "fileName": "/srv/app/code/Amasty/Mod/D.php", "lineNumber": 7}
+  ],
+  "stats": {}
+}
