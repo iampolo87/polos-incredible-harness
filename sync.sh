@@ -57,6 +57,15 @@ while read -r link; do
   fi
 done
 
+# 2b. Overrides: hand-written generic versions of files whose live copy is excluded (or too private to
+#     rewrite line by line). Laid over the copy, so they go through the same rewrites and scans.
+if [ -d overrides ]; then
+  rsync -a overrides/ "$D/claude/"
+  (cd overrides && find . -type f) | while read -r f; do
+    if [ "$SRC/$f" -nt "overrides/$f" ]; then echo "sync: note: ${f#./} changed in $SRC after its override was written" >&2; fi
+  done
+fi
+
 # 3. MCP servers (user scope + every project scope, deduplicated by name) in .mcp.json shape.
 #    env/header values become ${NAME} references; URL credentials, query strings and token-like
 #    path segments are dropped; the value of any --*token/key/secret/password* argument becomes ${ARG}.

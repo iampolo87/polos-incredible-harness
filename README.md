@@ -18,7 +18,7 @@ Prose rules get ignored under pressure. So the setup splits in two:
 | Path | What it is |
 |---|---|
 | `claude/CLAUDE.md` | Global instructions: role, code-generation discipline, token discipline, pointers to rulesets |
-| `claude/rulesets/` | `core/` (routing, review, security, planning, architecture, ponytail) and `frameworks/` (Magento 2, Laravel) |
+| `claude/rulesets/` | `core/` (routing, orchestration, review, security, planning, architecture, ponytail) and `frameworks/` (Magento 2, Laravel) |
 | `claude/agents/` | `implementer`, `implementer-deep`, `reviewer`, `ui-verifier`, the `judgment-*` judges and fixer |
 | `claude/skills/` | Debugging, TDD, verification, commits, planning, Jira context, Magento upgrade estimation and cloud audit, OpenSpec helpers |
 | `claude/commands/` | `m2-init`, `m2-review`, `m2-fix-objectmanager`, `ponytail-review`, `ponytail-audit` |
@@ -100,16 +100,18 @@ In order, it:
 
 1. Copies an allowlist from `~/.claude`. Credentials, history, sessions, projects, caches, hidden files, logs and archives are never copied.
 2. Lists symlinked skills in `links.txt` when the target has a git remote, and copies them otherwise.
-3. Writes MCP servers from `~/.claude.json` with every `env` and header value replaced by a `${NAME}` reference.
-4. Rewrites the home directory to `${HOME}`, then applies your `REPLACE` expressions.
-5. Refuses binary files, then runs a secret scan and a `PRIVATE_TERMS` scan. Any failure exits 1 and prints `file:line` only.
+3. Lays `overrides/` over the copy: hand-written generic versions of files whose live copy is too private to export.
+4. Writes MCP servers from `~/.claude.json` with every `env` and header value replaced by a `${NAME}` reference.
+5. Rewrites the home directory to `${HOME}`, then applies your `REPLACE` expressions.
+6. Refuses binary files, then runs a secret scan and a `PRIVATE_TERMS` scan. Any failure exits 1 and prints `file:line` only.
 
 It refuses to run without `sync.local.sh`. The scans are pattern based, so read the diff before every push.
 
 ## What was changed for publication
 
 - Client names, internal hostnames and ticket keys were replaced with neutral ones (`client-a`, `Vendor`, `PROJ-123`).
-- Left out: skills and playbooks that carried real project data, the employer-specific estimation skill and coding standard, and `rulesets/core/orchestration.md` (a machine-specific inventory). `CLAUDE.md` and `routing.md` still point at some of these files.
+- Left out: skills and playbooks that carried real project data, and the employer-specific estimation skill and coding standard. A few files still point at them.
+- `rulesets/core/orchestration.md` is a generic rewrite kept in `overrides/`: the live file also holds a machine inventory (which project uses which server, accounts, incidents).
 - Third-party packs that can be installed from upstream were left out too.
 
 ## Credits
